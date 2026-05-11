@@ -1,0 +1,8 @@
+name = "imessage-via-bluebubbles"
+description = "Read and list iMessage conversations on macOS via the local BlueBubbles bridge; send iMessages with per-call approval. Requires BlueBubbles Server installed and running locally — see https://docs.withaileron.ai/guides/setting-up-bluebubbles/."
+
+actions = [
+  "actions/list-recent-chats",
+  "actions/read-chat",
+  "actions/send-message",
+]
