@@ -1,0 +1,42 @@
+# Aileron connector manifest for github://ALRubinger/aileron-connector-bluebubbles.
+#
+# Per ADR-0002 the manifest declares the connector's identity, what it
+# can talk to (network), and what credentials it needs to do so. The
+# runtime enforces these at the WASM sandbox boundary and at the action
+# boundary (defense in depth per ADR-0003 / ADR-0005).
+#
+# This connector bridges iMessage via BlueBubbles Server
+# (https://bluebubbles.app/), a local HTTP service running on the
+# user's Mac. Aileron talks only to localhost; BlueBubbles holds the
+# macOS Full Disk Access and Automation permissions and translates
+# requests into Messages.app reads and AppleScript sends. The
+# rationale for this approach lives in
+# github.com/ALRubinger/aileron#514.
+
+# `version` is `0.0.0-dev` in source as a placeholder. CI substitutes
+# the real version (extracted from the pushed tag) into a build copy
+# before hashing/signing/packing.
+[connector]
+name = "github://ALRubinger/aileron-connector-bluebubbles"
+version = "0.0.0-dev"
+publisher = "ALRubinger"
+
+# Network capability — the only host:port pair this connector is allowed
+# to dial. The BlueBubbles default port is 1234; users who run it on
+# a different port today need to update this manifest and rebuild
+# locally. A future schema extension (per-binding URL override) is
+# tracked separately.
+[capabilities.network]
+hosts = ["localhost:1234"]
+
+# Credential capability — the BlueBubbles server password the user set
+# during the BlueBubbles install wizard. Per ADR-0005 the connector
+# never holds the credential bytes; the runtime sets
+# `Authorization: Bearer <password>` host-side when an outbound
+# request marks itself as `credential: "api_key"`. BlueBubbles
+# accepts the password via the Authorization header as well as via
+# the `?password=` query string; we use the header so the secret
+# never appears in URL form.
+[capabilities.credential]
+kind = "api_key"
+scope = "Read your iMessage history and send new iMessages via your local BlueBubbles Server"

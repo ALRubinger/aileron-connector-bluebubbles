@@ -1,0 +1,48 @@
+name: Release
+
+# Atomic release: one push of a `vX.Y.Z` tag produces the connector
+# tarball (under tag `vX.Y.Z`) AND every action tarball (under tag
+# `actions/<name>/vX.Y.Z`), all pinned to the same connector content
+# hash.
+#
+# The pipeline is implemented as composite actions in
+# github.com/ALRubinger/aileron-actions, pinned to the `v0.0.1` tag.
+# See that repo's README for the contract each action expects from the
+# connector source layout. Bump the pin (or move to SHA pins for
+# stronger supply-chain trust) when aileron-actions ships a newer
+# release.
+#
+# Unlike aileron-connector-google, this connector has no OAuth client
+# secret to substitute. The user's BlueBubbles server password is bound
+# locally at install time (not at release); the release workflow just
+# builds, hashes, signs, and publishes.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ALRubinger/aileron-actions/actions/setup-go-wasm@v0.0.1
+
+      - uses: ALRubinger/aileron-actions/actions/build-wasm-connector@v0.0.1
+
+      - id: connector
+        uses: ALRubinger/aileron-actions/actions/sign-and-publish@v0.0.1
+        with:
+          signing-key: ${{ secrets.AILERON_SIGNING_KEY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: ALRubinger/aileron-actions/actions/publish-action-subpaths@v0.0.1
+        with:
+          signing-key: ${{ secrets.AILERON_SIGNING_KEY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          connector-hash: ${{ steps.connector.outputs.connector-hash }}
